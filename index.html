@@ -418,7 +418,7 @@ window.addEventListener('offline', () => setMsg('Offline. Changes are saved on t
 
 /* ---------- PWA ---------- */
 (function pwa() {
-const icon = "icon.png";
+const icon = "Icon.png";
   const man = {name:'Caretaker PA', short_name:'Friday', start_url: location.href.split('#')[0], display:'standalone', orientation:'portrait', background_color:'#000000', theme_color:'#000000', icons:[{src:icon, sizes:'512x512', type:'image/svg+xml', purpose:'any maskable'}]};
   const l = document.createElement('link'); l.rel = 'manifest'; l.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(man)); document.head.appendChild(l);
   if ('serviceWorker' in navigator) {
