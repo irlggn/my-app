@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>CA Inter Personal Assistant</title>
+<title>Friday</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23000'/%3E%3Crect x='16' y='16' width='32' height='32' rx='8' fill='%233b82f6'/%3E%3C/svg%3E">
 <style>
 :root{--bg:#000;--bg2:#09090b;--card:#121215;--line:#27272a;--text:#fafafa;--mute:#a1a1aa;--blue:#3b82f6;--glow:rgba(59,130,246,.45);--ok:#22c55e;--warn:#f59e0b;--r:16px;--nav:64px}
@@ -418,8 +418,8 @@ window.addEventListener('offline', () => setMsg('Offline. Changes are saved on t
 
 /* ---------- PWA ---------- */
 (function pwa() {
-  const icon = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#000"/><rect x="128" y="128" width="256" height="256" rx="64" fill="#3b82f6"/></svg>');
-  const man = {name:'CA Inter Personal Assistant', short_name:'CA PA', start_url: location.href.split('#')[0], display:'standalone', orientation:'portrait', background_color:'#000000', theme_color:'#000000', icons:[{src:icon, sizes:'512x512', type:'image/svg+xml', purpose:'any maskable'}]};
+const icon = "icon.png";
+  const man = {name:'Caretaker PA', short_name:'Friday', start_url: location.href.split('#')[0], display:'standalone', orientation:'portrait', background_color:'#000000', theme_color:'#000000', icons:[{src:icon, sizes:'512x512', type:'image/svg+xml', purpose:'any maskable'}]};
   const l = document.createElement('link'); l.rel = 'manifest'; l.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(man)); document.head.appendChild(l);
   if ('serviceWorker' in navigator) {
     const sw = `const C='ca-pa-v1';self.addEventListener('install',e=>{self.skipWaiting()});self.addEventListener('activate',e=>e.waitUntil(clients.claim()));self.addEventListener('fetch',e=>{if(e.request.method!=='GET'||!e.request.url.startsWith(self.location.origin))return;e.respondWith(fetch(e.request).then(r=>{const c=r.clone();caches.open(C).then(x=>x.put(e.request,c));return r}).catch(()=>caches.match(e.request)))});`;
