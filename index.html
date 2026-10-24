@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>CA Inter Personal Assistant</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23000'/%3E%3Crect x='16' y='16' width='32' height='32' rx='8' fill='%233b82f6'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#000;--bg2:#09090b;--card:#121215;--line:#27272a;--text:#fafafa;--mute:#a1a1aa;--blue:#3b82f6;--glow:rgba(59,130,246,.45);--ok:#22c55e;--warn:#f59e0b;--r:16px;--nav:64px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+body{display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+#view{flex:1;overflow-y:auto;padding:14px 14px calc(var(--nav) + env(safe-area-inset-bottom) + 18px);scrollbar-width:none;max-width:720px;width:100%;margin:0 auto}
+#view::-webkit-scrollbar{display:none}
+h1{font-size:22px;font-weight:700;letter-spacing:-.02em}
+h2{font-size:16px;font-weight:650;margin-bottom:10px}
+.sub{color:var(--mute);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:10px}.sp{justify-content:space-between}.wrap{flex-wrap:wrap}.grow{flex:1}
+button,select,input{font:inherit;color:var(--text)}
+button{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer;transition:border-color .15s,background .15s}
+button:active{transform:scale(.97)}
+button.pri{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600;box-shadow:0 0 18px var(--glow)}
+button.sm{padding:6px 10px;font-size:13px;border-radius:10px}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+select,input[type=text],input[type=number]{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;min-width:0}
+input[type=number]{width:72px}
+nav{position:fixed;left:0;right:0;bottom:0;height:calc(var(--nav) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(9,9,11,.96);border-top:1px solid var(--line);display:flex;backdrop-filter:blur(12px);z-index:10}
+nav button{flex:1;border:0;background:none;border-radius:0;color:var(--mute);font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 2px}
+nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--blue)}nav button.on svg{filter:drop-shadow(0 0 6px var(--glow))}
+/* pet */
+.pet{display:flex;align-items:center;gap:12px}
+.petwrap{width:96px;height:96px;flex:none;perspective:420px;position:relative}
+.petin{width:100%;height:100%;transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .18s ease-out;transform-style:preserve-3d}
+.pa{width:100%;height:100%}
+.pa>*{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 10px 8px rgba(0,0,0,.65)) drop-shadow(0 0 10px rgba(59,130,246,.25))}
+.pa svg.px{image-rendering:pixelated}
+.a-float{animation:bob 2.6s ease-in-out infinite}
+.a-bounce{animation:hop 1.1s cubic-bezier(.3,0,.4,1) infinite;transform-origin:50% 100%}
+.a-sway{animation:sway 3s ease-in-out infinite;transform-origin:50% 90%}
+.pshadow{position:absolute;left:18%;right:18%;bottom:-2px;height:8px;border-radius:50%;background:radial-gradient(#000a,#0000 70%)}
+@keyframes hop{0%,100%{transform:translateY(0) scale(1.06,.94)}40%{transform:translateY(-14px) scale(.96,1.05)}70%{transform:translateY(0) scale(1.04,.96)}}
+@keyframes sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.prev{background:var(--bg2);border:1px dashed var(--line);border-radius:14px;padding:10px;display:grid;place-items:center}
+.pet .eye{animation:blink 4s infinite;transform-origin:center;transform-box:fill-box}
+.bubble{position:relative;background:var(--bg2);border:1px solid var(--blue);border-radius:14px;padding:11px 13px;box-shadow:0 0 16px rgba(59,130,246,.18);font-weight:550}
+.bubble:before{content:"";position:absolute;left:-7px;top:26px;width:12px;height:12px;background:var(--bg2);border-left:1px solid var(--blue);border-bottom:1px solid var(--blue);transform:rotate(45deg)}
+@keyframes bob{50%{transform:translateY(-5px)}}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+/* rings */
+.rings{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.ring{position:relative;width:92px;height:92px;margin:0 auto}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:8;stroke-linecap:round}
+.ring .bg{stroke:var(--line)}.ring .fg{stroke:var(--blue);transition:stroke-dashoffset .6s ease;filter:drop-shadow(0 0 4px var(--glow))}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:18px}
+.rings .sub{margin-top:6px}
+/* streaks */
+.streaks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.badge{border:1px solid var(--blue);border-radius:14px;padding:10px 6px;text-align:center;background:var(--bg2);box-shadow:0 0 14px rgba(59,130,246,.22) inset,0 0 14px rgba(59,130,246,.15)}
+.badge b{display:block;font-size:28px;line-height:1.1;color:#fff;text-shadow:0 0 12px var(--blue),0 0 24px var(--glow)}
+.badge span{font-size:12px;color:var(--mute)}
+/* heatmap */
+.heat{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+.heat i{aspect-ratio:1;border-radius:5px;background:#18181b;border:1px solid #1f1f23}
+.heat .l1{background:#0c2a4d;border-color:#12406f}.heat .l2{background:#1d4ed8;border-color:#2563eb}.heat .l3{background:#15803d;border-color:#16a34a}.heat .l4{background:#22c55e;border-color:#4ade80;box-shadow:0 0 8px rgba(34,197,94,.5)}
+.legend{display:flex;gap:4px;align-items:center;justify-content:flex-end;margin-top:8px;font-size:12px;color:var(--mute)}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+/* lists */
+.acc>.hd{display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;background:none;border:0;padding:2px 0}
+.bar{height:5px;background:var(--line);border-radius:5px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:var(--blue);box-shadow:0 0 8px var(--glow)}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-top:1px solid var(--line)}
+.ch span{font-size:14px}
+.st0{color:var(--mute)}.st1{color:var(--warn)}.st2{color:var(--blue)}.st3{color:var(--ok)}
+.chk{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line);cursor:pointer}
+.chk:first-of-type{border-top:0}
+.box{width:24px;height:24px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;flex:none;transition:.15s}
+.chk.on .box{background:var(--blue);border-color:var(--blue);box-shadow:0 0 10px var(--glow)}
+.chk.on .nm{color:var(--mute);text-decoration:line-through}
+.box svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:3;opacity:0}.chk.on .box svg{opacity:1}
+.timer{font-size:52px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-.03em;text-shadow:0 0 22px var(--glow);margin:6px 0 12px}
+.seg{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{flex:1;border:0;background:none;padding:7px}.seg button.on{background:var(--blue);color:#fff}
+.chip{display:inline-block;background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;margin:2px 4px 2px 0}
+.msg{font-size:13px;color:var(--mute);margin-top:8px;min-height:18px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--mute);display:inline-block;margin-right:6px}.dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav) + env(safe-area-inset-bottom) + 14px);transform:translateX(-50%);background:var(--blue);color:#fff;padding:9px 16px;border-radius:12px;font-weight:600;z-index:20;box-shadow:0 0 20px var(--glow)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main id="view" aria-live="polite"></main>
+<nav id="nav"></nav>
+
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dkey = d => (d || new Date()).toLocaleDateString('en-CA');
+const today = () => dkey();
+const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return dkey(d); };
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+/* ---------- syllabus ---------- */
+const STATUS = ['Not Started', 'In Progress', 'Completed', 'Revised'];
+const PAPERS = [
+  {id:'p1', g:1, n:'Advanced Accounting', ch:['Accounting Standards','Company Accounts: Share Capital & Debentures','Company Accounts: Final Accounts','Amalgamation of Companies','Internal Reconstruction','Consolidated Financial Statements','Accounting for Branches & Joint Ventures']},
+  {id:'p2', g:1, n:'Corporate and Other Laws', ch:['Companies Act: Incorporation & Capital','Companies Act: Directors, Meetings & Management','Companies Act: Audit, Dividends & Winding Up','LLP Act, 2008','General Clauses Act, 1897','Interpretation of Statutes','FEMA, 1999']},
+  {id:'p3', g:1, n:'Taxation', ch:['Section A: Basic Concepts & Residential Status','Section A: Heads of Income (Salary, House Property)','Section A: PGBP & Capital Gains','Section A: Other Sources, Clubbing, Deductions','Section A: Computation of Total Income & Tax','Section B: GST Levy, Supply & Time/Place of Supply','Section B: Input Tax Credit, Registration & Returns']},
+  {id:'p4', g:2, n:'Cost and Management Accounting', ch:['Cost Sheets & Cost Accounting Basics','Material, Labour & Overheads','Standard Costing & Variances','Marginal Costing & CVP','Budgets & Budgetary Control','Process Costing','Job, Batch & Contract Costing']},
+  {id:'p5', g:2, n:'Auditing and Ethics', ch:['Nature, Objective & Scope of Audit','Audit Strategy, Planning & Programme','Risk Assessment & Internal Control','Audit Evidence & Sampling','Audit of Items of Financial Statements','Audit Report','Code of Ethics']},
+  {id:'p6', g:2, n:'Financial Management & Strategic Management', ch:['FM: Time Value of Money & Ratio Analysis','FM: Cost of Capital & WACC','FM: Capital Structure & Leverage','FM: Capital Budgeting','FM: Working Capital Management','SM: Strategic Analysis','SM: Strategic Choices & Implementation']}
+];
+const TOTAL_CH = PAPERS.reduce((a, p) => a + p.ch.length, 0);
+
+/* ---------- state ---------- */
+const KEY = 'ca_inter_pa_v1';
+const defaults = () => ({
+  updated: 0,
+  syllabus: {},
+  habits: [{id:'h1',n:'Hydration (3L water)'},{id:'h2',n:'Reading (30 min)'},{id:'h3',n:'Morning routine'},{id:'h4',n:'Revision (1 hour)'}],
+  habitLog: {},
+  exercises: ['Push-ups','Bodyweight squats','Pull-ups / rows','Dips','Plank (seconds)','Lunges'].map((n, i) => ({id:'e' + i, n})),
+  workoutLog: {},
+  sessions: {},
+  settings: {name:'Gagan', petName:'Buddy', petStyle:'orb', anim:'float', petImg:''}
+});
+let S = load();
+S.settings = Object.assign(defaults().settings, S.settings);
+if (S.petImg) { S.settings.petImg = S.petImg; delete S.petImg; }
+function load() {
+  try { const r = JSON.parse(localStorage.getItem(KEY)); if (r && r.habits) return Object.assign(defaults(), r); } catch (e) {}
+  return defaults();
+}
+let syncTimer = null;
+function save(touch = true) {
+  if (touch) S.updated = Date.now();
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+  if (touch) { clearTimeout(syncTimer); syncTimer = setTimeout(() => { if (D.token && navigator.onLine) driveSync(true); else if (D.linked) D.pending = true; }, 2500); }
+}
+const chStatus = (p, i) => (S.syllabus[p] || {})[i] || 0;
+const studyMin = d => Object.values(S.sessions[d] || {}).reduce((a, b) => a + b, 0);
+const habitsDone = d => (S.habitLog[d] || []).filter(id => S.habits.some(h => h.id === id)).length;
+const habitsAll = d => S.habits.length > 0 && habitsDone(d) === S.habits.length;
+const workedOut = d => !!(S.workoutLog[d] && S.workoutLog[d].done);
+
+/* ---------- metrics ---------- */
+function streak(pred) {
+  let cur = 0, i = pred(daysAgo(0)) ? 0 : 1;
+  while (i < 400 && pred(daysAgo(i))) { cur++; i++; }
+  let best = 0, run = 0;
+  for (let k = 400; k >= 0; k--) { if (pred(daysAgo(k))) { run++; best = Math.max(best, run); } else run = 0; }
+  return {cur, best};
+}
+function syllabusPct() {
+  let n = 0;
+  PAPERS.forEach(p => p.ch.forEach((_, i) => { if (chStatus(p.id, i) >= 2) n++; }));
+  return Math.round(n / TOTAL_CH * 100);
+}
+function workoutPct() {
+  const w = S.workoutLog[today()]; if (!w) return 0;
+  if (w.done) return 100;
+  const n = S.exercises.filter(e => (w.sets && w.sets[e.id] || []).length).length;
+  return Math.round(n / Math.max(1, S.exercises.length) * 100);
+}
+const habitPct = () => Math.round(habitsDone(today()) / Math.max(1, S.habits.length) * 100);
+function level(d) {
+  const pts = (studyMin(d) >= 30 ? 1 : studyMin(d) > 0 ? .5 : 0) + (workedOut(d) ? 1 : 0) + (S.habits.length ? habitsDone(d) / S.habits.length : 0);
+  return pts === 0 ? 0 : pts < 1 ? 1 : pts < 2 ? 2 : pts < 3 ? 3 : 4;
+}
+
+/* ---------- pet ---------- */
+function petLine0() {
+  const t = today(), sw = streak(workedOut), ss = streak(d => studyMin(d) > 0), hp = habitPct(), m = studyMin(t);
+  const h = new Date().getHours();
+  if (workedOut(t) && habitsAll(t) && m >= 60) return "Perfect day, Gagan! Study, sweat and habits all done. Legend behavior!";
+  if (sw.cur >= 5 || ss.cur >= 5) return `You're unstoppable today, Gagan! ${Math.max(sw.cur, ss.cur)}-day streak. Keep grinding!`;
+  if (m >= 120) return "2+ hours of deep study. That's how Inter gets cleared. Proud of you!";
+  if (hp === 100) return "Every habit checked off. Discipline is your superpower!";
+  if (m === 0 && !workedOut(t) && hp === 0) return h < 12 ? "Good morning, Gagan! Time to smash those CA modules. Let's get to work." : "Time to smash those CA modules! One focused session starts the day.";
+  if (m === 0) return "No study logged yet. Start a 25-minute focus block right now!";
+  if (!workedOut(t)) return "Brain's warm. Now move your body: finish today's workout!";
+  if (hp < 100) return `Habits at ${hp}%. Close the gap before the day ends!`;
+  return "Solid progress. Stack one more session and own the day!";
+}
+const petSVG = `<svg class="px" viewBox="0 0 16 16" aria-hidden="true"><g shape-rendering="crispEdges"><path fill="#3b82f6" d="M3 2h2v2H3zM11 2h2v2h-2zM3 4h10v1H3zM2 5h12v7H2zM3 12h10v2H3z"/><path fill="#60a5fa" d="M3 5h10v2H3z"/><path fill="#000" d="M5 8h2v2H5zM9 8h2v2H9z" class="eye"/><path fill="#fff" d="M5 8h1v1H5zM9 8h1v1H9z"/><path fill="#1e3a8a" d="M7 11h2v1H7z"/></g></svg>`;
+
+const orbSVG = `<svg viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="og" cx=".35" cy=".28" r=".85"><stop offset="0" stop-color="#dbeafe"/><stop offset=".3" stop-color="#60a5fa"/><stop offset=".7" stop-color="#2563eb"/><stop offset="1" stop-color="#1e3a8a"/></radialGradient><radialGradient id="oe" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#cbd5e1"/></radialGradient></defs><circle cx="30" cy="22" r="9" fill="url(#og)"/><circle cx="70" cy="22" r="9" fill="url(#og)"/><circle cx="50" cy="55" r="38" fill="url(#og)"/><ellipse cx="36" cy="32" rx="14" ry="8" fill="#fff" opacity=".4" transform="rotate(-30 36 32)"/><g class="eye"><ellipse cx="38" cy="56" rx="8" ry="10" fill="url(#oe)"/><ellipse cx="62" cy="56" rx="8" ry="10" fill="url(#oe)"/><circle cx="39" cy="58" r="4.5" fill="#0b1220"/><circle cx="63" cy="58" r="4.5" fill="#0b1220"/><circle cx="40.5" cy="56" r="1.5" fill="#fff"/><circle cx="64.5" cy="56" r="1.5" fill="#fff"/></g><path d="M43 73q7 6 14 0" stroke="#0b1220" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`;
+function petHTML() {
+  const st = S.settings;
+  const inner = st.petImg ? `<img src="${st.petImg}" alt="${esc(st.petName)}" draggable="false">` : st.petStyle === 'pixel' ? petSVG : orbSVG;
+  return `<div class="petwrap"><div class="petin"><div class="pa a-${esc(st.anim)}">${inner}</div></div><div class="pshadow"></div></div>`;
+}
+const petLine = () => petLine0().replace(/Gagan/g, S.settings.name || 'friend');
+
+/* ---------- ui parts ---------- */
+const ICONS = {
+  dash:'<path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-7h6v7"/>',
+  syl:'<path d="M4 4h10a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4z"/><path d="M8 8h6M8 12h6"/>',
+  hab:'<path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/>',
+  ana:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
+  cust:'<path d="M4 6h9M19 6h1M4 12h3M13 12h7M4 18h11M21 18h-1"/><circle cx="16" cy="6" r="2.2"/><circle cx="10" cy="12" r="2.2"/><circle cx="18" cy="18" r="2.2"/>'
+};
+const TABS = [['dash','Dashboard'],['syl','Syllabus'],['hab','Habits'],['ana','Analytics'],['cust','Customize']];
+let tab = 'dash', openP = {}, tagPaper = PAPERS[0].id;
+function drawNav() {
+  $('#nav').innerHTML = TABS.map(([k, l]) => `<button data-tab="${k}" class="${k === tab ? 'on' : ''}" aria-label="${l}"${k === tab ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}</button>`).join('');
+}
+const ring = (pct, label) => { const c = 2 * Math.PI * 38; return `<div><div class="ring"><svg viewBox="0 0 92 92"><circle class="bg" cx="46" cy="46" r="38"/><circle class="fg" cx="46" cy="46" r="38" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - pct / 100)).toFixed(1)}"/></svg><b>${pct}%</b></div><div class="sub">${label}</div></div>`; };
+const badge = (n, l) => `<div class="badge"><b>${n}</b><span>${l}</span></div>`;
+const heatmap = () => { let h = ''; for (let i = 29; i >= 0; i--) { const d = daysAgo(i); h += `<i class="l${level(d)}" title="${d}: ${studyMin(d)} min study${workedOut(d) ? ', workout' : ''}, ${habitsDone(d)} habits"></i>`; } return h; };
+const fmt = s => { const m = Math.floor(s / 60), x = s % 60; return String(m).padStart(2, '0') + ':' + String(x).padStart(2, '0'); };
+const check = '<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>';
+
+/* ---------- views ---------- */
+function vDash() {
+  const sw = streak(workedOut), ss = streak(d => studyMin(d) > 0), sh = streak(habitsAll);
+  return `<div class="row sp" style="margin-bottom:12px"><div><h1>Hey ${esc(S.settings.name)}</h1><div class="sub">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</div></div><div class="sub">${studyMin(today())} min studied today</div></div>
+  <div class="card pet">${petHTML()}<div class="grow"><div class="sub" style="margin:0 0 6px 4px">${esc(S.settings.petName)}</div><div class="bubble" id="bubble">${esc(petLine())}</div></div></div>
+  <div class="card"><h2>Today</h2><div class="rings">${ring(syllabusPct(),'Syllabus')}${ring(workoutPct(),'Workout')}${ring(habitPct(),'Habits')}</div></div>
+  <div class="card"><h2>Streaks</h2><div class="streaks">${badge(ss.cur,'Study days')}${badge(sw.cur,'Workout days')}${badge(sh.cur,'Habit days')}</div></div>
+  ${timerCard()}`;
+}
+function timerCard() {
+  const logged = S.sessions[today()] || {};
+  const chips = Object.keys(logged).map(id => { const p = PAPERS.find(x => x.id === id); return p ? `<span class="chip">${esc(p.n.split(' ')[0])}: ${logged[id]}m</span>` : ''; }).join('');
+  return `<div class="card"><h2>Focus timer</h2>
+  <div class="seg" style="margin-bottom:8px"><button data-act="mode" data-v="up" class="${T.mode === 'up' ? 'on' : ''}">Stopwatch</button><button data-act="mode" data-v="pomo" class="${T.mode === 'pomo' ? 'on' : ''}">Pomodoro 25</button></div>
+  <div class="timer" id="tdisp">00:00</div>
+  <select id="tag" aria-label="Paper tag" style="width:100%;margin-bottom:10px">${PAPERS.map(p => `<option value="${p.id}"${p.id === tagPaper ? ' selected' : ''}>Paper ${p.id.slice(1)}: ${esc(p.n)}</option>`).join('')}</select>
+  <div class="row"><button class="pri grow" data-act="tstart" id="tbtn">${T.running ? 'Pause' : 'Start'}</button><button class="grow" data-act="treset">Reset</button><button class="grow" data-act="tlog">Log session</button></div>
+  <div class="msg">${chips || 'No sessions logged today.'}</div></div>`;
+}
+function vSyl() {
+  return `<h1 style="margin-bottom:12px">CA Intermediate</h1>` + [1, 2].map(g => `<div class="sub" style="margin:8px 2px">Group ${g}</div>` + PAPERS.filter(p => p.g === g).map(p => {
+    const done = p.ch.filter((_, i) => chStatus(p.id, i) >= 2).length, pct = Math.round(done / p.ch.length * 100), op = openP[p.id];
+    return `<div class="card acc"><button class="hd" data-act="acc" data-p="${p.id}" aria-expanded="${!!op}"><div class="grow"><b>Paper ${p.id.slice(1)}: ${esc(p.n)}</b><div class="sub">${done}/${p.ch.length} chapters done</div></div><span class="sub">${pct}% ${op ? '▲' : '▼'}</span></button><div class="bar"><i style="width:${pct}%"></i></div>` +
+      (op ? p.ch.map((c, i) => { const s = chStatus(p.id, i); return `<div class="ch"><span>${esc(c)}</span><select data-act="st" data-p="${p.id}" data-i="${i}" class="st${s}" aria-label="Status of ${esc(c)}">${STATUS.map((x, j) => `<option value="${j}"${j === s ? ' selected' : ''}>${x}</option>`).join('')}</select></div>`; }).join('') : '') + `</div>`;
+  }).join('')).join('');
+}
+function vHab() {
+  const t = today(), ids = S.habitLog[t] || [], w = S.workoutLog[t] || {sets:{}, done:false}, locked = w.done;
+  return `<h1 style="margin-bottom:12px">Habits & workout</h1>
+  <div class="card"><div class="row sp"><h2>Daily habits</h2><span class="sub">${habitsDone(t)}/${S.habits.length}</span></div>
+  ${S.habits.map(h => `<div class="chk ${ids.includes(h.id) ? 'on' : ''}" data-act="hab" data-id="${h.id}" role="checkbox" tabindex="0" aria-checked="${ids.includes(h.id)}"><div class="box">${check}</div><span class="nm grow">${esc(h.n)}</span><button class="sm" data-act="hdel" data-id="${h.id}" aria-label="Remove ${esc(h.n)}">✕</button></div>`).join('') || '<div class="sub">No habits yet. Add your first one below.</div>'}
+  <div class="row" style="margin-top:10px"><input type="text" id="newHabit" class="grow" placeholder="New habit" maxlength="40"><button class="pri" data-act="hadd">Add</button></div></div>
+  <div class="card"><div class="row sp"><h2>Home workout</h2><span class="sub">${locked ? 'Locked in for today' : 'Log sets as you go'}</span></div>
+  ${S.exercises.map(e => { const sets = (w.sets || {})[e.id] || []; return `<div class="ch"><div class="grow"><b>${esc(e.n)}</b><div class="sub">${sets.length ? sets.map((r, i) => `${i + 1}: ${r}`).join(' · ') : 'No sets yet'}</div></div>${locked ? '' : `<input type="number" min="1" max="999" inputmode="numeric" id="r_${e.id}" placeholder="reps"><button class="sm pri" data-act="wset" data-id="${e.id}">+ Set</button><button class="sm" data-act="wdel" data-id="${e.id}" aria-label="Remove last set">↶</button>`}</div>`; }).join('')}
+  ${locked ? '' : `<div class="row" style="margin-top:10px"><input type="text" id="newEx" class="grow" placeholder="Custom exercise" maxlength="40"><button data-act="eadd">Add</button></div>`}
+  <button class="pri" style="width:100%;margin-top:12px" data-act="wfin" ${locked ? 'disabled' : ''}>${locked ? 'Workout complete' : 'Finish workout'}</button></div>`;
+}
+function vAna() {
+  const sw = streak(workedOut), ss = streak(d => studyMin(d) > 0), sh = streak(habitsAll);
+  let wk = 0, wm = 0, ww = 0; for (let i = 0; i < 7; i++) { const d = daysAgo(i); wm += studyMin(d); if (workedOut(d)) ww++; wk += habitsDone(d); }
+  return `<h1 style="margin-bottom:12px">Analytics & streaks</h1>
+  <div class="card"><h2>Completion today</h2><div class="rings">${ring(syllabusPct(),'Syllabus')}${ring(workoutPct(),'Workout')}${ring(habitPct(),'Habits')}</div></div>
+  <div class="card"><h2>Current streak</h2><div class="streaks">${badge(ss.cur,'Study')}${badge(sw.cur,'Workout')}${badge(sh.cur,'Habits')}</div><h2 style="margin-top:14px">Best streak</h2><div class="streaks">${badge(ss.best,'Study')}${badge(sw.best,'Workout')}${badge(sh.best,'Habits')}</div></div>
+  <div class="card"><h2>Last 30 days</h2><div class="heat">${heatmap()}</div><div class="legend">Less <i style="background:#18181b"></i><i style="background:#0c2a4d"></i><i style="background:#1d4ed8"></i><i style="background:#15803d"></i><i style="background:#22c55e"></i> More</div></div>
+  <div class="card"><h2>This week</h2><div class="sub">${(wm / 60).toFixed(1)} hours studied · ${ww} workouts · ${wk} habits checked</div></div>`;
+}
+function custTop() {
+  const s = S.settings, opt = (v, l, cur) => `<option value="${v}"${v === cur ? ' selected' : ''}>${l}</option>`;
+  return `<h1 style="margin-bottom:12px">Customize</h1>
+  <div class="card"><h2>Profile</h2><div class="sub" style="margin-bottom:6px">Your name (your pet uses it when it talks)</div><input type="text" data-set="name" value="${esc(s.name)}" maxlength="24" style="width:100%"></div>
+  <div class="card"><h2>Pet</h2>
+  <div class="prev">${petHTML()}</div>
+  <div class="sub" style="margin:12px 0 6px">Pet name</div><input type="text" data-set="petName" value="${esc(s.petName)}" maxlength="20" style="width:100%">
+  <div class="row" style="margin-top:12px"><div class="grow"><div class="sub" style="margin-bottom:6px">Built-in look</div><select data-set="petStyle" style="width:100%" ${s.petImg ? 'disabled' : ''}>${opt('orb', '3D orb', s.petStyle)}${opt('pixel', 'Pixel', s.petStyle)}</select></div>
+  <div class="grow"><div class="sub" style="margin-bottom:6px">Animation</div><select data-set="anim" style="width:100%">${opt('float', 'Float', s.anim)}${opt('bounce', 'Bounce', s.anim)}${opt('sway', 'Sway', s.anim)}${opt('none', 'None', s.anim)}</select></div></div>
+  <div class="row" style="margin-top:12px"><button class="pri grow" data-act="petup">${s.petImg ? 'Change image' : 'Upload your own image'}</button>${s.petImg ? '<button data-act="petrm">Use built-in pet</button>' : ''}</div>
+  <input type="file" id="petfile" accept="image/*" hidden>
+  <div class="msg">Tip: use a square PNG of a 3D character with a transparent background. Hover or drag over the pet to tilt it in 3D.</div></div>` + cloudBody();
+}
+function vCust() { return custTop(); }
+function cloudBody() {
+  return `<div class="card"><h2>Google Drive sync</h2><div class="row"><span class="dot ${D.token ? 'on' : ''}"></span><b>${D.token ? 'Connected to Google Drive' : D.linked ? 'Linked: tap Connect to resume' : 'Not connected'}</b></div>
+  <div class="msg" id="syncmsg">${esc(D.msg)}</div>
+  <div class="sub" style="margin:10px 0 6px">Google OAuth client ID (Web application type)</div>
+  <input type="text" id="cid" style="width:100%" value="${esc(localStorage.getItem('ca_pa_cid') || '')}" placeholder="1234-abc.apps.googleusercontent.com" autocomplete="off" spellcheck="false">
+  <div class="row" style="margin-top:10px"><button class="pri grow" data-act="gconnect">Connect Google Drive</button><button class="grow" data-act="gsync" ${D.token ? '' : 'disabled'}>Sync now</button></div>
+  ${D.token ? '<button class="sm" style="margin-top:10px" data-act="gdisc">Disconnect</button>' : ''}</div>
+  <div class="card"><h2>How sync works</h2><div class="sub">Data lives in this device's storage first, so the app works offline. When you are connected and online, changes are saved to ca_inter_pa_data.json in your private Drive app folder (invisible to other apps). The newer copy always wins on sync. Set up a client ID once in Google Cloud Console: enable the Drive API and add this page's address as an authorized JavaScript origin.</div></div>
+  <div class="card"><h2>Manual backup</h2><div class="row"><button class="grow" data-act="exp">Export JSON</button><button class="grow" data-act="imp">Import JSON</button></div><input type="file" id="impf" accept="application/json" hidden></div>`;
+}
+
+/* ---------- render ---------- */
+function render() {
+  const v = $('#view'), top = v.scrollTop;
+  v.innerHTML = ({dash:vDash, syl:vSyl, hab:vHab, ana:vAna, cust:vCust})[tab]();
+  v.scrollTop = top; drawNav(); tick();
+}
+function toast(t) { const e = document.createElement('div'); e.className = 'toast'; e.textContent = t; document.body.appendChild(e); setTimeout(() => e.remove(), 1800); }
+
+/* ---------- timer ---------- */
+const T = {running:false, base:0, start:0, mode:'up'};
+const tSecs = () => T.base + (T.running ? Math.floor((Date.now() - T.start) / 1000) : 0);
+function tick() {
+  const el = $('#tdisp'); if (!el) return;
+  let s = tSecs();
+  if (T.mode === 'pomo') { const left = 1500 - s; if (left <= 0 && T.running) { T.base = 1500; T.running = false; toast('Pomodoro done! Log your session.'); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} const b = $('#tbtn'); if (b) b.textContent = 'Start'; } el.textContent = fmt(Math.max(0, 1500 - Math.min(s, 1500))); }
+  else el.textContent = fmt(s);
+}
+setInterval(tick, 500);
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-tab],[data-act]'); if (!t) return;
+  if (t.dataset.tab) { tab = t.dataset.tab; render(); $('#view').scrollTop = 0; return; }
+  act(t.dataset.act, t);
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.act === 'st') { (S.syllabus[t.dataset.p] = S.syllabus[t.dataset.p] || {})[t.dataset.i] = +t.value; save(); render(); }
+  if (t.id === 'tag') tagPaper = t.value;
+  if (t.dataset && t.dataset.set) { S.settings[t.dataset.set] = t.value.trim() || S.settings[t.dataset.set]; save(); render(); }
+  if (t.id === 'petfile' && t.files[0]) {
+    const img = new Image(), u = URL.createObjectURL(t.files[0]);
+    img.onload = () => { const k = Math.min(1, 320 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); S.settings.petImg = c.toDataURL('image/png'); URL.revokeObjectURL(u); save(); render(); toast('Pet updated'); };
+    img.onerror = () => { URL.revokeObjectURL(u); toast('Could not read that image'); };
+    img.src = u;
+  }
+  if (t.id === 'impf' && t.files[0]) { const r = new FileReader(); r.onload = () => { try { const o = JSON.parse(r.result); if (!o.habits) throw 0; S = Object.assign(defaults(), o); save(); render(); toast('Backup imported'); } catch (x) { toast('Invalid backup file'); } }; r.readAsText(t.files[0]); }
+});
+document.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && e.target.matches && e.target.matches('.chk')) { e.preventDefault(); e.target.click(); } });
+document.addEventListener('pointermove', e => {
+  const w = e.target.closest && e.target.closest('.petwrap'); if (!w) return;
+  const r = w.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+  w.firstChild.style.setProperty('--rx', (-y * 34).toFixed(1) + 'deg'); w.firstChild.style.setProperty('--ry', (x * 34).toFixed(1) + 'deg');
+});
+document.addEventListener('pointerout', e => {
+  const w = e.target.closest && e.target.closest('.petwrap');
+  if (w && !w.contains(e.relatedTarget)) { w.firstChild.style.setProperty('--rx', '0deg'); w.firstChild.style.setProperty('--ry', '0deg'); }
+});
+function act(a, t) {
+  const d = t.dataset, k = today();
+  switch (a) {
+    case 'acc': openP[d.p] = !openP[d.p]; render(); break;
+    case 'hab': { const l = S.habitLog[k] = S.habitLog[k] || []; const i = l.indexOf(d.id); i < 0 ? l.push(d.id) : l.splice(i, 1); save(); render(); break; }
+    case 'hdel': S.habits = S.habits.filter(h => h.id !== d.id); save(); render(); break;
+    case 'hadd': { const v = $('#newHabit').value.trim(); if (v) { S.habits.push({id:uid(), n:v}); save(); render(); } break; }
+    case 'eadd': { const v = $('#newEx').value.trim(); if (v) { S.exercises.push({id:uid(), n:v}); save(); render(); } break; }
+    case 'wset': { const v = parseInt($('#r_' + d.id).value, 10); if (!(v > 0)) { toast('Enter reps first'); break; } const w = S.workoutLog[k] = S.workoutLog[k] || {sets:{}, done:false}; (w.sets[d.id] = w.sets[d.id] || []).push(v); save(); render(); break; }
+    case 'wdel': { const w = S.workoutLog[k]; if (w && w.sets[d.id]) { w.sets[d.id].pop(); save(); render(); } break; }
+    case 'wfin': { const w = S.workoutLog[k]; if (!w || !Object.values(w.sets).some(s => s.length)) { toast('Log at least one set'); break; } w.done = true; save(); render(); toast('Workout locked in!'); break; }
+    case 'mode': if (!T.running) { T.mode = d.v; T.base = 0; } render(); break;
+    case 'tstart': if (T.running) { T.base = tSecs(); T.running = false; } else { T.start = Date.now(); T.running = true; } t.textContent = T.running ? 'Pause' : 'Start'; tick(); break;
+    case 'treset': T.running = false; T.base = 0; render(); break;
+    case 'tlog': { const s = tSecs(); if (s < 30) { toast('Study at least 30 seconds first'); break; } const m = Math.max(1, Math.round(s / 60)); const o = S.sessions[k] = S.sessions[k] || {}; o[tagPaper] = (o[tagPaper] || 0) + m; T.running = false; T.base = 0; save(); render(); toast(`Logged ${m} min`); break; }
+    case 'exp': { const a2 = document.createElement('a'); a2.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], {type:'application/json'})); a2.download = 'ca_inter_pa_data.json'; a2.click(); break; }
+    case 'imp': $('#impf').click(); break;
+    case 'petup': $('#petfile').click(); break;
+    case 'petrm': S.settings.petImg = ''; save(); render(); break;
+    case 'gconnect': driveConnect(); break;
+    case 'gsync': driveSync(false); break;
+    case 'gdisc': try { google.accounts.oauth2.revoke(D.token); } catch (e) {} D.token = null; D.linked = false; localStorage.removeItem('ca_pa_linked'); D.msg = 'Disconnected. Data stays on this device.'; render(); break;
+  }
+}
+
+/* ---------- Google Drive (appDataFolder) ---------- */
+const D = {token:null, client:null, linked:!!localStorage.getItem('ca_pa_linked'), pending:false, msg:'Offline-first: all data is stored on this device.'};
+const FNAME = 'ca_inter_pa_data.json';
+function setMsg(m) { D.msg = m; const e = $('#syncmsg'); if (e) e.textContent = m; }
+function loadGIS() { return new Promise((res, rej) => { if (window.google && google.accounts) return res(); const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.onload = res; s.onerror = () => rej(new Error('Could not load Google sign-in (check your connection).')); document.head.appendChild(s); }); }
+async function driveConnect() {
+  const cid = ($('#cid') ? $('#cid').value : '').trim() || localStorage.getItem('ca_pa_cid') || '';
+  if (!cid) { setMsg('Paste your Google OAuth client ID first.'); return; }
+  localStorage.setItem('ca_pa_cid', cid);
+  try {
+    await loadGIS();
+    D.client = google.accounts.oauth2.initTokenClient({
+      client_id: cid, scope: 'https://www.googleapis.com/auth/drive.appdata',
+      callback: r => { if (r.error) { setMsg('Sign-in failed: ' + r.error); return; } D.token = r.access_token; D.linked = true; localStorage.setItem('ca_pa_linked', '1'); setMsg('Connected. Syncing…'); driveSync(false); },
+      error_callback: er => setMsg('Sign-in cancelled or blocked: ' + (er.type || 'unknown'))
+    });
+    D.client.requestAccessToken({prompt: D.linked ? '' : 'consent'});
+  } catch (e) { setMsg(e.message); }
+}
+async function gapi(url, opt = {}) {
+  const r = await fetch(url, Object.assign({}, opt, {headers: Object.assign({Authorization: 'Bearer ' + D.token}, opt.headers || {})}));
+  if (r.status === 401) { D.token = null; render(); throw new Error('Session expired. Tap Connect Google Drive again.'); }
+  if (!r.ok) throw new Error('Drive error ' + r.status);
+  return r;
+}
+let syncing = false;
+async function driveSync(quiet) {
+  if (!D.token || syncing) return;
+  if (!navigator.onLine) { D.pending = true; setMsg('Offline. Will sync when you are back online.'); return; }
+  syncing = true; if (!quiet) setMsg('Syncing…');
+  try {
+    const q = encodeURIComponent(`name='${FNAME}'`);
+    const list = await (await gapi(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id)`)).json();
+    const id = list.files && list.files[0] && list.files[0].id;
+    let note = 'Uploaded to Drive';
+    if (id) {
+      const remote = await (await gapi(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`)).json();
+      if (remote && remote.habits && (remote.updated || 0) > S.updated) { S = Object.assign(defaults(), remote); save(false); note = 'Restored newer copy from Drive'; render(); }
+    }
+    if (note === 'Uploaded to Drive') {
+      const body = JSON.stringify(S);
+      if (id) await gapi(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body});
+      else {
+        const b = 'ca' + uid(), meta = JSON.stringify({name:FNAME, parents:['appDataFolder']});
+        await gapi('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {method:'POST', headers:{'Content-Type':'multipart/related; boundary=' + b}, body:`--${b}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${b}--`});
+      }
+    }
+    D.pending = false; setMsg(`${note} at ${new Date().toLocaleTimeString('en-IN')}.`);
+  } catch (e) { setMsg(e.message || 'Sync failed. Your data is safe on this device.'); }
+  syncing = false;
+}
+window.addEventListener('online', () => { if (D.token && D.pending) driveSync(true); else if (D.linked && !D.token) setMsg('Back online. Reconnect Google Drive to sync.'); });
+window.addEventListener('offline', () => setMsg('Offline. Changes are saved on this device.'));
+
+/* ---------- PWA ---------- */
+(function pwa() {
+  const icon = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#000"/><rect x="128" y="128" width="256" height="256" rx="64" fill="#3b82f6"/></svg>');
+  const man = {name:'CA Inter Personal Assistant', short_name:'CA PA', start_url: location.href.split('#')[0], display:'standalone', orientation:'portrait', background_color:'#000000', theme_color:'#000000', icons:[{src:icon, sizes:'512x512', type:'image/svg+xml', purpose:'any maskable'}]};
+  const l = document.createElement('link'); l.rel = 'manifest'; l.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(man)); document.head.appendChild(l);
+  if ('serviceWorker' in navigator) {
+    const sw = `const C='ca-pa-v1';self.addEventListener('install',e=>{self.skipWaiting()});self.addEventListener('activate',e=>e.waitUntil(clients.claim()));self.addEventListener('fetch',e=>{if(e.request.method!=='GET'||!e.request.url.startsWith(self.location.origin))return;e.respondWith(fetch(e.request).then(r=>{const c=r.clone();caches.open(C).then(x=>x.put(e.request,c));return r}).catch(()=>caches.match(e.request)))});`;
+    try { navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw], {type:'text/javascript'}))).catch(() => {}); } catch (e) {}
+  }
+})();
+
+/* ---------- boot ---------- */
+render();
+setInterval(() => { if (tab === 'dash' && !T.running) { const b = $('#bubble'); if (b) b.textContent = petLine(); } }, 20000);
+</script>
+</body>
+</html>
