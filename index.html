@@ -90,6 +90,19 @@ nav button.on{color:var(--blue)}nav button.on svg{filter:drop-shadow(0 0 6px var
 .msg{font-size:13px;color:var(--mute);margin-top:8px;min-height:18px}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--mute);display:inline-block;margin-right:6px}.dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)}
 .toast{position:fixed;left:50%;bottom:calc(var(--nav) + env(safe-area-inset-bottom) + 14px);transform:translateX(-50%);background:var(--blue);color:#fff;padding:9px 16px;border-radius:12px;font-weight:600;z-index:20;box-shadow:0 0 20px var(--glow)}
+.calhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal .wd{text-align:center;font-size:11px;color:var(--mute);padding-bottom:2px}
+.cal .d{aspect-ratio:1;padding:0;border-radius:10px;font-size:13px;background:#18181b;border:1px solid #1f1f23;position:relative;color:var(--text)}
+.cal .d.l1{background:#0c2a4d;border-color:#12406f}.cal .d.l2{background:#1d4ed8;border-color:#2563eb}.cal .d.l3{background:#15803d;border-color:#16a34a}.cal .d.l4{background:#22c55e;border-color:#4ade80;color:#052e16;font-weight:700}
+.cal .d.on:after{content:"";position:absolute;bottom:4px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--warn);box-shadow:0 0 6px var(--warn)}
+.cal .d.cs{box-shadow:0 0 0 1.5px var(--blue),0 0 12px var(--glow)}
+.cal .d.td{border-color:#fff}
+.cal .d.sel{outline:2px solid var(--blue);outline-offset:1px}
+.cal .d.fu{opacity:.3;pointer-events:none}
+.cal .d.pad{visibility:hidden;pointer-events:none}
+.caldet{margin-top:12px;padding:10px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;font-size:13px}
+.bubble{cursor:pointer}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -176,18 +189,59 @@ function level(d) {
 }
 
 /* ---------- pet ---------- */
+const PET_GENERIC = [
+  "Small steps every day beat big plans someday. Let's go!",
+  "Future CA Gagan is watching. Make him proud today.",
+  "Discipline is choosing what you want most over what you want now.",
+  "One chapter at a time. That's how mountains get moved.",
+  "You don't need motivation. You need the next 25 minutes.",
+  "Consistency beats intensity. Show up again today!",
+  "Every revision makes the exam a little less scary.",
+  "Hard now, easy later. Easy now, hard later. Pick wisely!",
+  "Your only competition is who you were yesterday.",
+  "Phone down, books up. Let's make this hour count!",
+  "Champions train when they don't feel like it. That's you!",
+  "ICAI rewards the ones who practice. Solve one more question!",
+  "Tiny habits, giant results. Keep stacking days.",
+  "You've got the brains and the grit. Now add the hours!",
+  "Don't break the chain, Gagan. Protect your streak!",
+  "Sweat now, shine on result day.",
+  "Tired is temporary. A cleared paper is forever.",
+  "Think of the pass certificate. Now go earn it, one page at a time.",
+  "Be so consistent that quitting stops being an option.",
+  "Win the morning, win the day. What's the first move?",
+  "Breathe, focus, begin. The rest follows.",
+  "I believe in you, Gagan. Now go prove me right!"
+];
+const PET_SIT = {
+  perfect: ["Perfect day, Gagan! Study, sweat and habits all done. Legend behavior!", "Triple win today: books, body and habits. Absolutely elite!", "Nothing left on the list. Go rest, you earned it!"],
+  streak: ["You're unstoppable today, Gagan! {n}-day streak. Keep grinding!", "{n} days in a row! Don't you dare break it now.", "That {n}-day streak is on fire. Feed it today too!", "{n} days of showing up. This is how toppers are made."],
+  deep: ["2+ hours of deep study. That's how Inter gets cleared. Proud of you!", "Deep work mode unlocked. Hours like these win exams!", "Your focus today is scary good. Keep it rolling!"],
+  habits: ["Every habit checked off. Discipline is your superpower!", "100% habits. Your future self just said thank you.", "Habits done! Now channel that energy into one more study block."],
+  morning: ["Good morning, Gagan! Time to smash those CA modules. Let's get to work.", "Fresh day, blank slate. Start with your toughest paper!", "Morning brain is the best brain. Open a chapter now!", "Rise and grind! A 25-minute sprint before anything else?"],
+  idle: ["Time to smash those CA modules! One focused session starts the day.", "Nothing logged yet. Start the timer and the rest gets easy.", "The day isn't over. One session turns it around!", "Ten minutes is better than zero. Press Start!"],
+  nostudy: ["No study logged yet. Start a 25-minute focus block right now!", "Your habits are rolling. Now give the books some love!", "Timer's waiting. Pick a paper and begin!", "Hit Pomodoro and read just one topic. Momentum will do the rest."],
+  noworkout: ["Brain's warm. Now move your body: finish today's workout!", "Study done? Now 10 minutes of push-ups. Strong body, sharp mind!", "Your workout streak is waiting. Log your sets!", "A quick set of squats beats an excuse any day."],
+  habitsLow: ["Habits at {n}%. Close the gap before the day ends!", "Only {n}% of habits done. A few taps to go!", "Check off one more habit. Easiest win of the day!"]
+};
+let lastPetLine = '';
 function petLine0() {
-  const t = today(), sw = streak(workedOut), ss = streak(d => studyMin(d) > 0), hp = habitPct(), m = studyMin(t);
-  const h = new Date().getHours();
-  if (workedOut(t) && habitsAll(t) && m >= 60) return "Perfect day, Gagan! Study, sweat and habits all done. Legend behavior!";
-  if (sw.cur >= 5 || ss.cur >= 5) return `You're unstoppable today, Gagan! ${Math.max(sw.cur, ss.cur)}-day streak. Keep grinding!`;
-  if (m >= 120) return "2+ hours of deep study. That's how Inter gets cleared. Proud of you!";
-  if (hp === 100) return "Every habit checked off. Discipline is your superpower!";
-  if (m === 0 && !workedOut(t) && hp === 0) return h < 12 ? "Good morning, Gagan! Time to smash those CA modules. Let's get to work." : "Time to smash those CA modules! One focused session starts the day.";
-  if (m === 0) return "No study logged yet. Start a 25-minute focus block right now!";
-  if (!workedOut(t)) return "Brain's warm. Now move your body: finish today's workout!";
-  if (hp < 100) return `Habits at ${hp}%. Close the gap before the day ends!`;
-  return "Solid progress. Stack one more session and own the day!";
+  const t = today(), sw = streak(workedOut), ss = streak(d => studyMin(d) > 0), hp = habitPct(), m = studyMin(t), h = new Date().getHours();
+  const best = Math.max(sw.cur, ss.cur);
+  let key = null;
+  if (workedOut(t) && habitsAll(t) && m >= 60) key = 'perfect';
+  else if (best >= 5) key = 'streak';
+  else if (m >= 120) key = 'deep';
+  else if (hp === 100) key = 'habits';
+  else if (m === 0 && !workedOut(t) && hp === 0) key = h < 12 ? 'morning' : 'idle';
+  else if (m === 0) key = 'nostudy';
+  else if (!workedOut(t)) key = 'noworkout';
+  else if (hp < 100) key = 'habitsLow';
+  const sit = key ? PET_SIT[key].map(x => x.replace('{n}', key === 'habitsLow' ? hp : best)) : [];
+  const pool = sit.length && Math.random() < .65 ? sit : PET_GENERIC;
+  let line, tries = 0;
+  do { line = pool[Math.floor(Math.random() * pool.length)]; } while (line === lastPetLine && ++tries < 10);
+  return lastPetLine = line;
 }
 const petSVG = `<svg class="px" viewBox="0 0 16 16" aria-hidden="true"><g shape-rendering="crispEdges"><path fill="#3b82f6" d="M3 2h2v2H3zM11 2h2v2h-2zM3 4h10v1H3zM2 5h12v7H2zM3 12h10v2H3z"/><path fill="#60a5fa" d="M3 5h10v2H3z"/><path fill="#000" d="M5 8h2v2H5zM9 8h2v2H9z" class="eye"/><path fill="#fff" d="M5 8h1v1H5zM9 8h1v1H9z"/><path fill="#1e3a8a" d="M7 11h2v1H7z"/></g></svg>`;
 
@@ -198,6 +252,8 @@ function petHTML() {
   return `<div class="petwrap"><div class="petin"><div class="pa a-${esc(st.anim)}">${inner}</div></div><div class="pshadow"></div></div>`;
 }
 const petLine = () => petLine0().replace(/Gagan/g, S.settings.name || 'friend');
+const pet = {line: ''};
+function sayNew() { pet.line = petLine(); const b = $('#bubble'); if (b) b.textContent = pet.line; }
 
 /* ---------- ui parts ---------- */
 const ICONS = {
@@ -208,6 +264,7 @@ const ICONS = {
   cust:'<path d="M4 6h9M19 6h1M4 12h3M13 12h7M4 18h11M21 18h-1"/><circle cx="16" cy="6" r="2.2"/><circle cx="10" cy="12" r="2.2"/><circle cx="18" cy="18" r="2.2"/>'
 };
 const TABS = [['dash','Dashboard'],['syl','Syllabus'],['hab','Habits'],['ana','Analytics'],['cust','Customize']];
+const cal = {y: new Date().getFullYear(), m: new Date().getMonth(), sel: ''};
 let tab = 'dash', openP = {}, tagPaper = PAPERS[0].id;
 function drawNav() {
   $('#nav').innerHTML = TABS.map(([k, l]) => `<button data-tab="${k}" class="${k === tab ? 'on' : ''}" aria-label="${l}"${k === tab ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}</button>`).join('');
@@ -215,6 +272,23 @@ function drawNav() {
 const ring = (pct, label) => { const c = 2 * Math.PI * 38; return `<div><div class="ring"><svg viewBox="0 0 92 92"><circle class="bg" cx="46" cy="46" r="38"/><circle class="fg" cx="46" cy="46" r="38" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - pct / 100)).toFixed(1)}"/></svg><b>${pct}%</b></div><div class="sub">${label}</div></div>`; };
 const badge = (n, l) => `<div class="badge"><b>${n}</b><span>${l}</span></div>`;
 const heatmap = () => { let h = ''; for (let i = 29; i >= 0; i--) { const d = daysAgo(i); h += `<i class="l${level(d)}" title="${d}: ${studyMin(d)} min study${workedOut(d) ? ', workout' : ''}, ${habitsDone(d)} habits"></i>`; } return h; };
+const activeDay = d => studyMin(d) > 0 || workedOut(d) || habitsDone(d) > 0;
+function calendar() {
+  const k0 = today(), as = streak(activeDay);
+  const run = new Set(); { let i = activeDay(daysAgo(0)) ? 0 : 1; for (let n = 0; n < as.cur; n++) run.add(daysAgo(i + n)); }
+  const first = new Date(cal.y, cal.m, 1), days = new Date(cal.y, cal.m + 1, 0).getDate(), lead = (first.getDay() + 6) % 7;
+  const sel = cal.sel || k0;
+  let g = ['Mo','Tu','We','Th','Fr','Sa','Su'].map(x => `<div class="wd">${x}</div>`).join('') + '<i class="d pad"></i>'.repeat(lead).replace(/<i class="d pad"><\/i>/g, '<button class="d pad" tabindex="-1" aria-hidden="true"></button>');
+  for (let n = 1; n <= days; n++) {
+    const k = dkey(new Date(cal.y, cal.m, n)), fu = k > k0;
+    g += `<button class="d l${fu ? 0 : level(k)}${!fu && activeDay(k) ? ' on' : ''}${run.has(k) ? ' cs' : ''}${k === k0 ? ' td' : ''}${k === sel ? ' sel' : ''}${fu ? ' fu' : ''}" data-act="calday" data-d="${k}" aria-label="${k}">${n}</button>`;
+  }
+  const hd = S.habits.length, det = `<b>${new Date(sel + 'T00:00').toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'short'})}</b><br>${studyMin(sel)} min studied · ${workedOut(sel) ? 'workout done' : 'no workout'} · ${habitsDone(sel)}/${hd} habits`;
+  return `<div class="card"><h2>Streak calendar</h2><div class="streaks" style="margin-bottom:12px">${badge(as.cur,'Day streak')}${badge(as.best,'Best streak')}${badge([...Array(30).keys()].filter(i => activeDay(daysAgo(i))).length,'Active (30d)')}</div>
+  <div class="calhd"><button class="sm" data-act="calprev" aria-label="Previous month">‹</button><b>${first.toLocaleDateString('en-IN', {month:'long', year:'numeric'})}</b><button class="sm" data-act="calnext" aria-label="Next month">›</button></div>
+  <div class="cal">${g}</div><div class="legend"><span style="margin-right:auto"><span class="dot" style="background:var(--warn);margin-right:4px"></span>active day · blue ring = current streak</span>Less <i style="background:#18181b"></i><i style="background:#0c2a4d"></i><i style="background:#1d4ed8"></i><i style="background:#15803d"></i><i style="background:#22c55e"></i> More</div>
+  <div class="caldet">${det}</div></div>`;
+}
 const fmt = s => { const m = Math.floor(s / 60), x = s % 60; return String(m).padStart(2, '0') + ':' + String(x).padStart(2, '0'); };
 const check = '<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>';
 
@@ -222,7 +296,7 @@ const check = '<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>';
 function vDash() {
   const sw = streak(workedOut), ss = streak(d => studyMin(d) > 0), sh = streak(habitsAll);
   return `<div class="row sp" style="margin-bottom:12px"><div><h1>Hey ${esc(S.settings.name)}</h1><div class="sub">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</div></div><div class="sub">${studyMin(today())} min studied today</div></div>
-  <div class="card pet">${petHTML()}<div class="grow"><div class="sub" style="margin:0 0 6px 4px">${esc(S.settings.petName)}</div><div class="bubble" id="bubble">${esc(petLine())}</div></div></div>
+  <div class="card pet">${petHTML()}<div class="grow"><div class="sub" style="margin:0 0 6px 4px">${esc(S.settings.petName)}</div><div class="bubble" id="bubble" data-act="petsay" title="Tap for another line">${esc(pet.line || (pet.line = petLine()))}</div></div></div>
   <div class="card"><h2>Today</h2><div class="rings">${ring(syllabusPct(),'Syllabus')}${ring(workoutPct(),'Workout')}${ring(habitPct(),'Habits')}</div></div>
   <div class="card"><h2>Streaks</h2><div class="streaks">${badge(ss.cur,'Study days')}${badge(sw.cur,'Workout days')}${badge(sh.cur,'Habit days')}</div></div>
   ${timerCard()}`;
@@ -261,6 +335,7 @@ function vAna() {
   return `<h1 style="margin-bottom:12px">Analytics & streaks</h1>
   <div class="card"><h2>Completion today</h2><div class="rings">${ring(syllabusPct(),'Syllabus')}${ring(workoutPct(),'Workout')}${ring(habitPct(),'Habits')}</div></div>
   <div class="card"><h2>Current streak</h2><div class="streaks">${badge(ss.cur,'Study')}${badge(sw.cur,'Workout')}${badge(sh.cur,'Habits')}</div><h2 style="margin-top:14px">Best streak</h2><div class="streaks">${badge(ss.best,'Study')}${badge(sw.best,'Workout')}${badge(sh.best,'Habits')}</div></div>
+  ${calendar()}
   <div class="card"><h2>Last 30 days</h2><div class="heat">${heatmap()}</div><div class="legend">Less <i style="background:#18181b"></i><i style="background:#0c2a4d"></i><i style="background:#1d4ed8"></i><i style="background:#15803d"></i><i style="background:#22c55e"></i> More</div></div>
   <div class="card"><h2>This week</h2><div class="sub">${(wm / 60).toFixed(1)} hours studied · ${ww} workouts · ${wk} habits checked</div></div>`;
 }
@@ -311,7 +386,7 @@ setInterval(tick, 500);
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-tab],[data-act]'); if (!t) return;
-  if (t.dataset.tab) { tab = t.dataset.tab; render(); $('#view').scrollTop = 0; return; }
+  if (t.dataset.tab) { tab = t.dataset.tab; if (tab === 'dash') pet.line = ''; render(); $('#view').scrollTop = 0; return; }
   act(t.dataset.act, t);
 });
 document.addEventListener('change', e => {
@@ -355,6 +430,10 @@ function act(a, t) {
     case 'exp': { const a2 = document.createElement('a'); a2.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], {type:'application/json'})); a2.download = 'ca_inter_pa_data.json'; a2.click(); break; }
     case 'imp': $('#impf').click(); break;
     case 'petup': $('#petfile').click(); break;
+    case 'petsay': sayNew(); break;
+    case 'calprev': cal.m--; if (cal.m < 0) { cal.m = 11; cal.y--; } render(); break;
+    case 'calnext': cal.m++; if (cal.m > 11) { cal.m = 0; cal.y++; } render(); break;
+    case 'calday': cal.sel = d.d; render(); break;
     case 'petrm': S.settings.petImg = ''; save(); render(); break;
     case 'gconnect': driveConnect(); break;
     case 'gsync': driveSync(false); break;
@@ -429,7 +508,7 @@ const icon = "Icon.png";
 
 /* ---------- boot ---------- */
 render();
-setInterval(() => { if (tab === 'dash' && !T.running) { const b = $('#bubble'); if (b) b.textContent = petLine(); } }, 20000);
+setInterval(() => { if (tab === 'dash' && !T.running) sayNew(); }, 20000);
 </script>
 </body>
 </html>
